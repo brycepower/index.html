@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signing Day — CFB 27 Dynasty</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#0b0e16;color:#fff;font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden;}
+.app{width:100%;max-width:520px;}
+h1{font-family:'Archivo Black',sans-serif;font-size:26px;text-align:center;letter-spacing:1px;line-height:1.15;}
+h1 span{color:#e8b93c;}
+.sub{text-align:center;color:#8b94a3;font-size:12px;margin:8px 0 26px;letter-spacing:2px;text-transform:uppercase;}
+.card{background:#141926;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:20px;margin-bottom:14px;}
+.lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#e8b93c;font-weight:700;margin-bottom:12px;}
+.players{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.pbtn{background:#0f1420;border:2px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 4px;cursor:pointer;text-align:center;transition:.2s;}
+.pbtn:hover{border-color:#e8b93c66;}
+.pbtn.sel{border-color:#e8b93c;background:#1a2032;}
+.pbtn .face{width:44px;height:44px;margin:0 auto 6px;}
+.pbtn .nm{font-size:11px;font-weight:700;color:#cdd3de;}
+select,button.big{width:100%;padding:14px;border-radius:12px;font-family:'Inter';font-weight:700;font-size:15px;}
+select{background:#0f1420;color:#fff;border:2px solid rgba(255,255,255,.12);appearance:auto;}
+.row{display:flex;gap:10px;margin-top:10px;}
+button.big{background:linear-gradient(135deg,#e8b93c,#c99420);color:#1a1408;border:none;cursor:pointer;letter-spacing:.5px;}
+button.big:disabled{opacity:.35;cursor:not-allowed;}
+button.ghost{background:transparent;color:#e8b93c;border:2px solid #e8b93c55;}
+/* ══ STAGE ══ */
+#stage{display:none;position:fixed;inset:0;background:radial-gradient(ellipse 120% 90% at 50% 20%,#1c2337 0%,#0b0e16 60%);z-index:50;overflow:hidden;}
+#stage.on{display:block;}
+.banner{position:absolute;top:0;left:0;right:0;padding:14px;text-align:center;background:linear-gradient(180deg,rgba(11,14,22,.95),transparent);z-index:5;}
+.banner .t1{font-family:'Archivo Black';font-size:15px;letter-spacing:2px;color:#e8b93c;}
+.banner .t2{font-size:11px;color:#8b94a3;letter-spacing:3px;text-transform:uppercase;margin-top:3px;}
+#scene{position:absolute;inset:0;display:flex;align-items:flex-end;justify-content:center;}
+svg#art{width:min(96vw,560px);height:auto;display:block;margin:0 auto;}
+.commitband{position:absolute;left:0;right:0;bottom:0;padding:22px 16px calc(22px + env(safe-area-inset-bottom));text-align:center;background:linear-gradient(0deg,rgba(0,0,0,.92),transparent);opacity:0;transition:opacity .6s;z-index:6;}
+.commitband.show{opacity:1;}
+.commitband .c1{font-family:'Archivo Black';font-size:clamp(20px,6vw,32px);letter-spacing:1px;}
+.commitband .c2{font-size:13px;color:#cdd3de;margin-top:6px;font-weight:600;}
+#confetti{position:absolute;inset:0;pointer-events:none;z-index:4;}
+.ctrl{position:absolute;top:12px;right:12px;z-index:9;display:flex;gap:8px;}
+.ctrl button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:12px;}
+.gobtn{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);z-index:9;padding:16px 34px;border-radius:40px;border:none;font-family:'Archivo Black';font-size:16px;letter-spacing:1px;background:linear-gradient(135deg,#e8b93c,#c99420);color:#1a1408;cursor:pointer;box-shadow:0 8px 30px rgba(232,185,60,.4);}
+.hint{position:absolute;bottom:80px;left:0;right:0;text-align:center;font-size:11px;color:#8b94a3;letter-spacing:1px;z-index:9;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+</style>
+</head>
+<body>
+
+<div class="app" id="setup">
+  <h1>🏈 SIGNING <span>DAY</span></h1>
+  <div class="sub">CFB 27 Dynasty · The Rebuild League</div>
+
+  <div class="card">
+    <div class="lbl">Who's announcing?</div>
+    <div class="players" id="players"></div>
+  </div>
+
+  <div class="card">
+    <div class="lbl">Pick your school</div>
+    <select id="school"></select>
+    <div class="row">
+      <button class="big ghost" onclick="randomSchool()">🎲 Surprise Me</button>
+      <button class="big" id="go" onclick="startCeremony()" disabled>Start the Ceremony</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAGE -->
+<div id="stage">
+  <div class="banner">
+    <div class="t1" id="bName">NATIONAL SIGNING DAY</div>
+    <div class="t2">CFB 27 Dynasty · Live</div>
+  </div>
+  <div id="scene"><svg id="art" viewBox="0 0 560 480" xmlns="http://www.w3.org/2000/svg"></svg></div>
+  <canvas id="confetti"></canvas>
+  <div class="hint" id="hint">Screen-record this part 📱</div>
+  <button class="gobtn" id="reveal" onclick="runReveal()">MAKE THE PICK</button>
+  <div class="commitband" id="band">
+    <div class="c1" id="c1"></div>
+    <div class="c2" id="c2"></div>
+  </div>
+  <div class="ctrl">
+    <button onclick="location.reload()">↺ Reset</button>
+  </div>
+</div>
+
+<script>
+/* ── TEAM POOL — OVR under 82, G5 + P5 strugglers. Edit freely. ── */
+const TEAMS=[
+["Akron","AKR","#041E42","#A89968"],["App State","APP","#222","#FFCC00"],["Air Force","AF","#003087","#8F8F8C"],
+["Arkansas State","ARST","#CC092F","#000"],["Army","ARMY","#D4BF91","#000"],["Ball State","BALL","#BA0C2F","#fff"],["Baylor","BAY","#154734","#FFB81C"],
+["Arizona","ARIZ","#CC0033","#003366"],["Arizona State","ASU","#8C1D40","#FFC627"],["Boise State","BSU","#0033A0","#D64309"],
+["California","CAL","#003262","#FDB515"],["Cincinnati","CIN","#E00122","#000"],["Colorado","COLO","#CFB87C","#000"],
+["Duke","DUKE","#003087","#fff"],["Houston","HOU","#C8102E","#fff"],["Kansas","KU","#0051BA","#E8000D"],
+["Kentucky","UK","#0033A0","#fff"],["Maryland","UMD","#E03A3E","#FFD520"],["Memphis","MEM","#003087","#898D8D"],
+["Michigan State","MSU","#18453B","#fff"],["Minnesota","MINN","#7A0019","#FFCC33"],["NC State","NCST","#CC0000","#fff"],
+["Oklahoma State","OKST","#FF7300","#000"],["Oregon State","ORST","#DC4405","#000"],["Pittsburgh","PITT","#003594","#FFB81C"],
+["South Florida","USF","#006747","#CFC493"],["Syracuse","SYR","#F76900","#002D72"],["Tulane","TUL","#006747","#418FDE"],
+["UCF","UCF","#000","#BA9B37"],["UConn","CONN","#000E2F","#fff"],["Virginia Tech","VT","#630031","#CF4420"],
+["Washington State","WSU","#981E32","#5E6A71"],["West Virginia","WVU","#002855","#EAAA00"],["Wisconsin","WIS","#C5050C","#fff"],
+["Boston College","BC","#98002E","#BC9B6A"],["Bowling Green","BGSU","#FE5000","#4F2C1D"],["Buffalo","BUF","#005BBB","#fff"],
+["Central Michigan","CMU","#6A0032","#FFC82E"],["Charlotte","CLT","#046A38","#B9975B"],["Coastal Carolina","CCU","#006F71","#A27752"],
+["Colorado State","CSU","#1E4D2B","#C8C372"],["Delaware","DEL","#00539F","#FFD200"],["East Carolina","ECU","#592A8A","#FDC82F"],
+["Eastern Michigan","EMU","#046938","#fff"],["FAU","FAU","#003366","#CC0000"],["FIU","FIU","#081E3F","#B6862C"],
+["Fresno State","FRES","#DB0032","#002E6D"],["Georgia Southern","GASO","#011E41","#87714D"],["Georgia State","GSU","#0039A6","#C60C30"],
+["Hawai'i","HAW","#024731","#C8C8C8"],["Jacksonville State","JVST","#CC0000","#fff"],["James Madison","JMU","#450084","#CBB677"],
+["Kennesaw State","KENN","#231F20","#FDBB30"],["Kent State","KENT","#002664","#EAAB00"],["Liberty","LIB","#0A254E","#A61F21"],
+["Louisiana","UL","#CE181E","#fff"],["Louisiana Tech","LT","#002F8B","#E31B23"],["UL-Monroe","ULM","#840029","#FDB913"],
+["Marshall","MRSH","#00B140","#000"],["Miami (OH)","M-OH","#B61E2E","#000"],["Middle Tennessee","MTSU","#0066CC","#000"],
+["Missouri State","MOST","#5E0009","#fff"],["Mississippi State","MSST","#660000","#fff"],["Navy","NAVY","#00205B","#C5B783"],
+["Nevada","NEV","#003366","#807F84"],["New Mexico","UNM","#BA0C2F","#63666A"],["New Mexico State","NMSU","#8C0B42","#fff"],
+["North Dakota State","NDSU","#0A5640","#FFC72C"],["North Texas","UNT","#00853E","#fff"],["Northern Illinois","NIU","#BA0C2F","#000"],
+["Northwestern","NW","#4E2A84","#fff"],["Ohio","OHIO","#00694E","#fff"],["Old Dominion","ODU","#003057","#7C878E"],
+["Purdue","PUR","#CEB888","#000"],["Rice","RICE","#00205B","#C1C6C8"],["Rutgers","RUTG","#CC0033","#fff"],
+["Sam Houston","SHSU","#F56423","#fff"],["San Diego State","SDSU","#A6192E","#000"],["San José State","SJSU","#0055A2","#E5A823"],
+["South Alabama","USA","#00205B","#BF0D3E"],["Southern Miss","USM","#FFAB00","#000"],["Stanford","STAN","#8C1515","#fff"],
+["Temple","TEM","#9D2235","#fff"],["Texas State","TXST","#501214","#8D734A"],["Toledo","TOL","#15397F","#FFD200"],
+["Troy","TROY","#8A2432","#C2C4C6"],["Tulsa","TLSA","#002D72","#C8102E"],["UAB","UAB","#1E6B52","#F4C300"],
+["UMass","MASS","#881C1C","#fff"],["UNLV","UNLV","#CF0A2C","#666"],["UTEP","UTEP","#041E42","#FF8200"],
+["UTSA","UTSA","#0C2340","#F15A22"],["Utah State","USU","#00263A","#8A8D8F"],["Vanderbilt","VAN","#866D4B","#000"],
+["Virginia","UVA","#232D4B","#F84C1E"],["Wake Forest","WAKE","#9E7E38","#000"],["Western Kentucky","WKU","#B01E24","#fff"],
+["Western Michigan","WMU","#6C4023","#B5A167"],["Wyoming","WYO","#492F24","#FFC425"]
+];
+
+/* ── PLAYERS — stylized avatars from the photos ── */
+const PLAYERS={
+Kyle:{skin:"#f2c9a8",hair:"#6e4f2f",hairStyle:"swept",facial:"none",shirt:"#d92332",shirt2:"#d92332",collar:"crew",chain:true,build:1},
+Javan:{skin:"#f0c4a0",hair:"#7a5b33",hairStyle:"short",facial:"stubble",shirt:"#f4f4f6",shirt2:"#1e2a52",collar:"jersey",chain:true,build:1.05,jersey:"88"},
+Chris:{skin:"#f3cdb0",hair:"#8a6a3d",hairStyle:"buzz",facial:"goatee",shirt:"#171717",shirt2:"#0076b6",collar:"crew",chain:false,build:1.18},
+Jackson:{skin:"#f6d7bb",hair:"#d8b465",hairStyle:"swept",facial:"none",shirt:"#0f9db8",shirt2:"#0f9db8",collar:"polo",chain:false,build:1.15},
+Bryce:{skin:"#e9bd97",hair:"#5d4426",hairStyle:"styled",facial:"beard",shirt:"#3fd6a0",shirt2:"#3fd6a0",collar:"polo",chain:false,build:1.02}
+};
+
+let selPlayer=null, selTeam=null, decoys=[];
+
+/* setup UI */
+const pDiv=document.getElementById('players');
+Object.keys(PLAYERS).forEach(n=>{
+  const b=document.createElement('div');b.className='pbtn';
+  b.innerHTML=`<svg class="face" viewBox="0 0 60 60">${faceSVG(PLAYERS[n],30,30,22)}</svg><div class="nm">${n}</div>`;
+  b.onclick=()=>{document.querySelectorAll('.pbtn').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');selPlayer=n;check();};
+  pDiv.appendChild(b);
+});
+const sel=document.getElementById('school');
+const sorted=TEAMS.map((t,i)=>({t,i})).sort((a,b)=>a.t[0].localeCompare(b.t[0]));
+sel.innerHTML='<option value="">— choose a school —</option>'+sorted.map(o=>`<option value="${o.i}">${o.t[0]}</option>`).join('');
+sel.onchange=()=>{selTeam=sel.value===''?null:+sel.value;check();};
+function randomSchool(){selTeam=Math.floor(Math.random()*TEAMS.length);sel.value=selTeam;check();}
+function check(){document.getElementById('go').disabled=!(selPlayer!==null&&selTeam!==null);}
+
+/* face builder (small avatar + stage reuse) */
+function faceSVG(p,cx,cy,r){
+  let s=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${p.skin}"/>`;
+  // hair
+  if(p.hairStyle==="buzz")s+=`<path d="M${cx-r} ${cy-r*0.25} A ${r} ${r} 0 0 1 ${cx+r} ${cy-r*0.25} L ${cx+r*0.85} ${cy-r*0.05} A ${r*0.9} ${r*0.9} 0 0 0 ${cx-r*0.85} ${cy-r*0.05} Z" fill="${p.hair}"/>`;
+  else if(p.hairStyle==="short"||p.hairStyle==="styled")s+=`<path d="M${cx-r} ${cy-r*0.15} A ${r} ${r} 0 0 1 ${cx+r} ${cy-r*0.15} L ${cx+r*0.8} ${cy-r*0.1} Q ${cx} ${cy-r*0.75} ${cx-r*0.8} ${cy-r*0.1} Z" fill="${p.hair}"/>`;
+  else s+=`<path d="M${cx-r} ${cy-r*0.1} A ${r} ${r} 0 0 1 ${cx+r} ${cy-r*0.1} L ${cx+r*0.75} ${cy-r*0.05} Q ${cx+r*0.2} ${cy-r*0.9} ${cx-r*0.9} ${cy-r*0.25} Z" fill="${p.hair}"/>`;
+  // facial hair
+  if(p.facial==="beard")s+=`<path d="M${cx-r*0.68} ${cy+r*0.1} Q ${cx} ${cy+r*1.25} ${cx+r*0.68} ${cy+r*0.1} L ${cx+r*0.55} ${cy+r*0.05} Q ${cx} ${cy+r*0.95} ${cx-r*0.55} ${cy+r*0.05} Z" fill="${p.hair}" opacity=".85"/>`;
+  if(p.facial==="goatee")s+=`<ellipse cx="${cx}" cy="${cy+r*0.62}" rx="${r*0.22}" ry="${r*0.16}" fill="${p.hair}" opacity=".7"/>`;
+  if(p.facial==="stubble")s+=`<path d="M${cx-r*0.6} ${cy+r*0.15} Q ${cx} ${cy+r*0.9} ${cx+r*0.6} ${cy+r*0.15}" stroke="${p.hair}" stroke-width="${r*0.28}" fill="none" opacity=".28" stroke-linecap="round"/>`;
+  // eyes + smile
+  s+=`<circle cx="${cx-r*0.35}" cy="${cy-r*0.08}" r="${r*0.07}" fill="#2a2a2a"/><circle cx="${cx+r*0.35}" cy="${cy-r*0.08}" r="${r*0.07}" fill="#2a2a2a"/>`;
+  s+=`<path d="M${cx-r*0.3} ${cy+r*0.32} Q ${cx} ${cy+r*0.55} ${cx+r*0.3} ${cy+r*0.32}" stroke="#b06a4d" stroke-width="${r*0.09}" fill="none" stroke-linecap="round"/>`;
+  return s;
+}
+
+/* ── STAGE ── */
+function hatSVG(team,x,y,scale,id){
+  const[,ab,c1,c2]=team;
+  return `<g id="${id}" transform="translate(${x},${y}) scale(${scale})">
+    <ellipse cx="0" cy="26" rx="46" ry="9" fill="rgba(0,0,0,.35)"/>
+    <path d="M-38 18 Q-38 -12 0 -14 Q38 -12 38 18 Z" fill="${c1}" stroke="rgba(255,255,255,.15)" stroke-width="1.5"/>
+    <path d="M-40 18 Q0 30 40 18 L52 22 Q54 27 48 28 L-40 24 Z" fill="${c1}" stroke="rgba(0,0,0,.2)"/>
+    <circle cx="0" cy="2" r="13" fill="${c2==='#fff'?'#ffffff22':c2+'33'}"/>
+    <text x="0" y="7" text-anchor="middle" font-family="Archivo Black" font-size="13" fill="${c2}">${ab}</text>
+  </g>`;
+}
+
+function startCeremony(){
+  const team=TEAMS[selTeam];
+  // pick 2 decoys
+  const pool=TEAMS.filter((_,i)=>i!==selTeam);
+  decoys=[pool[Math.floor(Math.random()*pool.length)]];
+  let d2=pool[Math.floor(Math.random()*pool.length)];
+  while(d2===decoys[0])d2=pool[Math.floor(Math.random()*pool.length)];
+  decoys.push(d2);
+
+  document.getElementById('setup').style.display='none';
+  document.getElementById('stage').classList.add('on');
+  document.getElementById('bName').textContent=selPlayer.toUpperCase()+" — SIGNING DAY";
+
+  const p=PLAYERS[selPlayer], art=document.getElementById('art');
+  const w=560;
+  const bw=90*p.build;
+  art.innerHTML=`
+    <!-- crowd dots -->
+    ${Array.from({length:26},(_,i)=>`<circle cx="${20+i*21}" cy="${52+(i%3)*13}" r="6" fill="#2a3248"/>`).join('')}
+    <!-- character -->
+    <g id="char">
+      <path d="M${280-bw} 480 L${280-bw} 330 Q280 ${292-p.build*8} ${280+bw} 330 L${280+bw} 480 Z" fill="${p.shirt}"/>
+      ${p.collar==="jersey"?`<path d="M${280-bw} 480 L${280-bw} 330 Q280 284 ${280+bw} 330 L${280+bw} 480 L${280+bw-30} 480 L${280+bw-30} 360 Z" fill="${p.shirt2}" opacity=".9"/><text x="280" y="420" text-anchor="middle" font-family="Archivo Black" font-size="54" fill="${p.shirt2}">${p.jersey||""}</text>`:""}
+      ${p.collar==="polo"?`<path d="M258 306 L280 330 L302 306 L296 300 L280 316 L264 300 Z" fill="${shade(p.shirt,-30)}"/>`:""}
+      ${p.chain?`<path d="M262 318 Q280 336 298 318" stroke="#e8c85a" stroke-width="3.5" fill="none"/>`:""}
+      <circle cx="280" cy="258" r="52" fill="${p.skin}"/>
+      <g>${faceSVG(p,280,258,52).replace(`<circle cx="280" cy="258" r="52" fill="${p.skin}"/>`,'')}</g>
+      <!-- arm (animates) -->
+      <g id="arm" style="transform-origin:335px 340px;">
+        <path d="M330 345 Q400 330 430 355" stroke="${p.shirt}" stroke-width="26" fill="none" stroke-linecap="round"/>
+        <circle id="hand" cx="430" cy="355" r="14" fill="${p.skin}"/>
+      </g>
+    </g>
+    <!-- table -->
+    <rect x="60" y="368" width="440" height="20" rx="6" fill="#3a2c1c"/>
+    <rect x="80" y="388" width="18" height="92" fill="#2c2115"/><rect x="462" y="388" width="18" height="92" fill="#2c2115"/>
+    <rect x="60" y="368" width="440" height="6" rx="3" fill="#54402a"/>
+    <!-- hats on table -->
+    ${hatSVG(decoys[0],160,346,0.9,"hatL")}
+    ${hatSVG(TEAMS[selTeam],280,344,0.95,"hatM")}
+    ${hatSVG(decoys[1],400,346,0.9,"hatR")}
+    <!-- mic -->
+    <rect x="272" y="300" width="4" height="0" fill="#555"/>
+  `;
+}
+
+function shade(hex,amt){
+  const n=parseInt(hex.slice(1),16);let r=(n>>16)+amt,g=((n>>8)&255)+amt,b=(n&255)+amt;
+  r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));
+  return "#"+((r<<16)|(g<<8)|b).toString(16).padStart(6,"0");
+}
+
+function runReveal(){
+  document.getElementById('reveal').style.display='none';
+  document.getElementById('hint').style.display='none';
+  const team=TEAMS[selTeam];
+  const hatM=document.getElementById('hatM'),hatL=document.getElementById('hatL'),hand=document.getElementById('hand');
+  const char=document.getElementById('char');
+  // Sequence: hover decoy → crowd tension → grab real → to head → confetti
+  animate(hand,[{cx:430},{cx:180}],1200,()=>{           // hand drifts to LEFT decoy
+    hatL.style.transition='transform .25s';hatL.style.transform='translate(160px,338px) scale(.9)';
+    char.style.animation='shake .35s 2';
+    setTimeout(()=>{                                     // fake-out! slide to middle
+      hatL.style.transform='';
+      animate(hand,[{cx:180},{cx:280}],700,()=>{
+        // lift real hat to head
+        const steps=40;let i=0;
+        const sx=280,sy=344,ex=280,ey=196;
+        const t=setInterval(()=>{
+          i++;const k=i/steps,e=1-Math.pow(1-k,3);
+          const x=sx+(ex-sx)*e,y=sy+(ey-sy)*e,s=0.95+0.35*e;
+          hatM.setAttribute('transform',`translate(${x},${y}) scale(${s})`);
+          hand.setAttribute('cx',280);hand.setAttribute('cy',355-(150*e));
+          if(i>=steps){clearInterval(t);
+            document.getElementById('arm').style.display='none';
+            crown(team);}
+        },22);
+      });
+    },900);
+  });
+}
+function animate(el,frames,dur,done){
+  const s=+el.getAttribute('cx'),e=frames[1].cx,st=performance.now();
+  function f(n){const k=Math.min(1,(n-st)/dur),ease=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+    el.setAttribute('cx',s+(e-s)*ease);
+    if(k<1)requestAnimationFrame(f);else done&&done();}
+  requestAnimationFrame(f);
+}
+function crown(team){
+  const[name,,c1,c2]=team;
+  document.getElementById('c1').textContent=`${selPlayer.toUpperCase()} COMMITS TO ${name.toUpperCase()}!`;
+  document.getElementById('c1').style.color=c2==="#fff"?"#fff":c2;
+  document.getElementById('c2').textContent="CFB 27 Dynasty · The Rebuild Begins 🏈";
+  document.getElementById('band').classList.add('show');
+  confetti(c1,c2);
+  setTimeout(()=>celebrate(team),1400);
+}
+
+/* ── DX CROTCH CHOP — stands up ON the table ── */
+const PANTS={Kyle:"#3b5a7a",Javan:"#8fa8c0",Chris:"#4a637f",Jackson:"#c9b18e",Bryce:"#c4ac85"};
+function dxChop(art,done){
+  const p=PLAYERS[selPlayer];
+  const pants=PANTS[selPlayer]||"#3b5a7a";
+  const char=document.getElementById('char');
+  const hatM=document.getElementById('hatM');
+  char.style.display='none';
+  hatM.setAttribute('transform','translate(280,66) scale(1.05)');
+  pop(art,225,120,"HE'S ON THE TABLE!!");
+
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('id','standChar');
+  art.appendChild(g);
+  const bw=64*p.build;
+
+  let count=0, up=true;
+  const draw=()=>{
+    const bounce=up?-6:4;
+    let arms;
+    if(up){
+      arms=`
+        <path d="M${280-bw+6} ${218+bounce} Q205 ${190+bounce} 185 ${150+bounce}" stroke="${p.shirt}" stroke-width="20" fill="none" stroke-linecap="round"/>
+        <circle cx="185" cy="${150+bounce}" r="11" fill="${p.skin}"/>
+        <path d="M${280+bw-6} ${218+bounce} Q355 ${190+bounce} 375 ${150+bounce}" stroke="${p.shirt}" stroke-width="20" fill="none" stroke-linecap="round"/>
+        <circle cx="375" cy="${150+bounce}" r="11" fill="${p.skin}"/>`;
+    }else{
+      arms=`
+        <path d="M${280-bw+6} ${218+bounce} Q250 ${268+bounce} 296 ${296+bounce}" stroke="${p.shirt}" stroke-width="20" fill="none" stroke-linecap="round"/>
+        <circle cx="296" cy="${296+bounce}" r="11" fill="${p.skin}"/>
+        <path d="M${280+bw-6} ${218+bounce} Q310 ${268+bounce} 264 ${296+bounce}" stroke="${p.shirt}" stroke-width="20" fill="none" stroke-linecap="round"/>
+        <circle cx="264" cy="${296+bounce}" r="11" fill="${p.skin}"/>`;
+    }
+    g.innerHTML=`
+      <!-- legs on the table -->
+      <path d="M${280-bw*0.55} ${300+bounce} L${280-bw*0.6} 366 L${280-bw*0.25} 366 L${280-bw*0.2} ${305+bounce} Z" fill="${pants}"/>
+      <path d="M${280+bw*0.55} ${300+bounce} L${280+bw*0.6} 366 L${280+bw*0.25} 366 L${280+bw*0.2} ${305+bounce} Z" fill="${pants}"/>
+      <ellipse cx="${280-bw*0.43}" cy="367" rx="16" ry="6" fill="#2a2a2a"/>
+      <ellipse cx="${280+bw*0.43}" cy="367" rx="16" ry="6" fill="#2a2a2a"/>
+      <!-- torso -->
+      <path d="M${280-bw} ${300+bounce} L${280-bw} ${212+bounce} Q280 ${182+bounce} ${280+bw} ${212+bounce} L${280+bw} ${300+bounce} Z" fill="${p.shirt}"/>
+      ${p.collar==="jersey"?`<text x="280" y="${268+bounce}" text-anchor="middle" font-family="Archivo Black" font-size="36" fill="${p.shirt2}">${p.jersey||""}</text>`:""}
+      ${p.chain?`<path d="M266 ${206+bounce} Q280 ${220+bounce} 294 ${206+bounce}" stroke="#e8c85a" stroke-width="3" fill="none"/>`:""}
+      <!-- head -->
+      ${faceSVG(p,280,158+bounce,40)}
+      ${arms}`;
+    hatM.setAttribute('transform',`translate(280,${104+bounce}) scale(1.02)`);
+    if(!up)pop(art,280,330,"✂️ CHOP!");
+    up=!up;count++;
+    if(count<8){setTimeout(draw, up?260:300);}
+    else{
+      g.remove();
+      char.style.display='';
+      hatM.setAttribute('transform','translate(280,196) scale(1.3)');
+      done&&done();
+    }
+  };
+  draw();
+}
+
+/* ── POST-PICK CELEBRATION: crack a beer, then a smoke ── */
+function celebrate(team){
+  const art=document.getElementById('art');
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.setAttribute('id','celebrate');
+  art.appendChild(g);
+
+  // beer can rises from table edge to mouth
+  g.innerHTML=`
+    <g id="beer" transform="translate(430,350)">
+      <rect x="-11" y="-26" width="22" height="44" rx="6" fill="#c9c9ce" stroke="#9a9aa0"/>
+      <rect x="-11" y="-26" width="22" height="10" rx="5" fill="#e8e8ec"/>
+      <ellipse cx="0" cy="-26" rx="11" ry="3.5" fill="#dcdce2"/>
+      <rect x="-8" y="-10" width="16" height="20" rx="3" fill="${team[2]}"/>
+    </g>`;
+  const beer=document.getElementById('beer');
+  // animate can to mouth
+  let i=0,steps=34;
+  const sx=430,sy=350,ex=302,ey=272;
+  const t=setInterval(()=>{
+    i++;const k=i/steps,e=1-Math.pow(1-k,3);
+    beer.setAttribute('transform',`translate(${sx+(ex-sx)*e},${sy+(ey-sy)*e}) rotate(${-38*e})`);
+    if(i>=steps){clearInterval(t);
+      // KSSSH crack + foam
+      pop(art,318,236,"KSSSH!");
+      foam(art,306,252,team);
+      // tilt/drink for 1.6s then DX chop dance, then cigarette
+      setTimeout(()=>{beer.remove();dxChop(art,()=>smoke(art));},1900);
+    }
+  },20);
+}
+function pop(art,x,y,txt){
+  const e=document.createElementNS('http://www.w3.org/2000/svg','text');
+  e.setAttribute('x',x);e.setAttribute('y',y);
+  e.setAttribute('font-family','Archivo Black');e.setAttribute('font-size','17');
+  e.setAttribute('fill','#ffe36e');e.textContent=txt;
+  art.appendChild(e);
+  setTimeout(()=>e.remove(),1200);
+}
+function foam(art,x,y,team){
+  for(let j=0;j<7;j++){
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x+(Math.random()*18-6));c.setAttribute('cy',y-Math.random()*10);
+    c.setAttribute('r',2+Math.random()*3);c.setAttribute('fill','#fff');c.setAttribute('opacity','.9');
+    art.appendChild(c);
+    let cy=+c.getAttribute('cy');
+    const tv=setInterval(()=>{cy-=1.5;c.setAttribute('cy',cy);c.setAttribute('opacity',c.getAttribute('opacity')*0.93);
+      if(+c.getAttribute('opacity')<0.05){clearInterval(tv);c.remove();}},40);
+  }
+}
+function smoke(art){
+  // cigarette at mouth + glowing tip
+  const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+  g.innerHTML=`
+    <rect x="300" y="276" width="30" height="5" rx="2.5" fill="#f5f0e6" transform="rotate(12 300 276)"/>
+    <rect x="326" y="281" width="7" height="5" rx="2.5" fill="#e88b3a" transform="rotate(12 300 276)"/>
+    <circle id="tip" cx="332" cy="284" r="2.6" fill="#ff5a1f"/>`;
+  art.appendChild(g);
+  // pulsing ember + drifting smoke rings
+  let ph=0;
+  setInterval(()=>{ph+=0.22;document.getElementById('tip')?.setAttribute('opacity',0.6+Math.sin(ph)*0.4);},60);
+  setInterval(()=>{
+    const s=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    let sy=278,sx=334,r=2.5,o=0.5;
+    s.setAttribute('cx',sx);s.setAttribute('cy',sy);s.setAttribute('r',r);
+    s.setAttribute('fill','none');s.setAttribute('stroke','#cfd6e0');s.setAttribute('stroke-width','1.4');
+    s.setAttribute('opacity',o);art.appendChild(s);
+    const tv=setInterval(()=>{
+      sy-=1.6;sx+=Math.sin(sy*0.09)*1.1;r+=0.32;o-=0.012;
+      s.setAttribute('cy',sy);s.setAttribute('cx',sx);s.setAttribute('r',r);s.setAttribute('opacity',Math.max(0,o));
+      if(o<=0){clearInterval(tv);s.remove();}
+    },45);
+  },650);
+}
+/* confetti */
+function confetti(c1,c2){
+  const cv=document.getElementById('confetti'),ctx=cv.getContext('2d');
+  cv.width=innerWidth;cv.height=innerHeight;
+  const P=Array.from({length:160},()=>({x:Math.random()*cv.width,y:-20-Math.random()*cv.height*.5,
+    v:2+Math.random()*3.5,w:6+Math.random()*7,a:Math.random()*Math.PI,va:(Math.random()-.5)*.2,
+    c:[c1,c2,"#fff"][Math.floor(Math.random()*3)]}));
+  (function loop(){ctx.clearRect(0,0,cv.width,cv.height);
+    P.forEach(p=>{p.y+=p.v;p.a+=p.va;if(p.y>cv.height+20){p.y=-20;p.x=Math.random()*cv.width;}
+      ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.fillStyle=p.c;ctx.fillRect(-p.w/2,-p.w/4,p.w,p.w/2);ctx.restore();});
+    requestAnimationFrame(loop);})();
+}
+</script>
+</body>
+</html>
